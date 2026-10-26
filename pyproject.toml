@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "context-engineering"
+version = "0.1.0"
+description = "上下文工程案例演示 —— Token 限制与长文本处理的典型解决方案"
+requires-python = ">=3.11"
+dependencies = []
+
+[dependency-groups]
+dev = [
+    "pytest>=7.0",
+    "ruff>=0.4",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+]
+
+[tool.ruff.lint.per-file-ignores]
+# 数据文件中刻意放了长段落文本，关闭行长检查
+"src/context_engineering/data/*.py" = ["E501"]
+"run_demo_*.py" = ["E501"]
+"run_all.py" = ["E501"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]

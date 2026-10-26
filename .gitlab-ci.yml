@@ -1,0 +1,74 @@
+stages:
+  - install
+  - lint
+  - test
+  - build
+  - deploy
+
+default:
+  image: python:3.11-slim
+
+variables:
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+
+cache:
+  key:
+    files:
+      - requirements.txt
+      - requirements-dev.txt
+  paths:
+    - .cache/pip
+
+.python-deps:
+  before_script:
+    - python -m pip install --upgrade pip
+    - if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+    - if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
+
+install:
+  stage: install
+  extends: .python-deps
+  script:
+    - python -m pip check
+
+lint:
+  stage: lint
+  extends: .python-deps
+  script:
+    - ruff check .
+
+test:
+  stage: test
+  extends: .python-deps
+  script:
+    - pytest -q --junitxml=report.xml
+  artifacts:
+    when: always
+    reports:
+      junit: report.xml
+
+build:
+  stage: build
+  extends: .python-deps
+  script:
+    - pip install build
+    - python -m build
+  artifacts:
+    paths:
+      - dist/
+    expire_in: 7 days
+
+# 仅 main 分支可部署，且必须手动触发（人工确认），使用 build 阶段产出的 dist/
+deploy:
+  stage: deploy
+  extends: .python-deps
+  needs: [test, build]
+  environment:
+    name: production
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+      when: manual
+  script:
+    - ls -l dist
+    # TODO: 换成实际发布命令
+    - echo "ready to deploy"
